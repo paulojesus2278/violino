@@ -171,10 +171,52 @@ function buildEvents(doc){
       const x=e.xs.length?Math.min(...e.xs):x0+w*.5;
       out.push({midi:Math.min(...e.midis),page:cur.page,
         fx:(x+HEAD)/PW,half:HEAD/PW,acc:e.acc?ACC/PW:0,
-        yt:cur.top/PH-15/PH,yb:(cur.top+STAFF+15)/PH});
+        yt:cur.top/PH-15/PH,yb:(cur.top+STAFF+15)/PH,
+        sys:sysList.length-1,xa:x+HEAD,accOn:e.acc});
     });
   });
-  return out; /* repetições (|: :|) não são expandidas neste protótipo */
+  SYS=sysList;return out; /* repetições (|: :|) não são expandidas neste protótipo */
+}
+
+/* ---------- ajuste da barra às pautas da imagem (funciona com PNG recortado) ---------- */
+let SYS=[];
+function staves(cv){
+  const w=cv.width,h=cv.height,d=cv.getContext('2d').getImageData(0,0,w,h).data,rows=[];
+  for(let y=0;y<h;y++){
+    let best=0,run=0,st=0,bs=0;
+    for(let x=0;x<w;x++){
+      const i=(y*w+x)*4;
+      if(d[i+3]>128&&(d[i]+d[i+1]+d[i+2])/3<150){if(!run)st=x;run++;if(run>best){best=run;bs=st}}else run=0;
+    }
+    if(best>.1*w)rows.push([y,bs]);
+  }
+  const ls=[];
+  for(const [y,sx] of rows){const L=ls[ls.length-1];if(L&&y-L.y1<=1){L.y1=y;L.s=Math.min(L.s,sx)}else ls.push({y0:y,y1:y,s:sx})}
+  const c=ls.map(l=>({y:(l.y0+l.y1)/2,s:l.s})),out=[];
+  for(let i=0;i+4<c.length;){
+    const dd=[1,2,3,4].map(j=>c[i+j].y-c[i+j-1].y),mn=Math.min(...dd),mx=Math.max(...dd);
+    if(mn>1&&mx<=1.35*mn){out.push({top:c[i].y,h:c[i+4].y-c[i].y,left:Math.min(...c.slice(i,i+5).map(q=>q.s))});i+=5}
+    else i++;
+  }
+  return out;
+}
+function fitLayout(){
+  const flat=[];
+  pages.forEach((pg,pi)=>staves(pg).forEach(st=>flat.push({...st,page:pi+1})));
+  if(flat.length===SYS.length&&flat.length){
+    ev.forEach(e=>{
+      const st=flat[e.sys],k=st.h/STAFF;
+      e.page=st.page;e.px=st.left+(e.xa-SYS[e.sys].left)*k;
+      e.pw=Math.max(6,14*k);e.pl=(HEAD+(e.accOn?ACC:0))*k+3;
+      e.y0=st.top-15*k;e.y1=st.top+st.h+15*k;
+    });
+    return true;
+  }
+  ev.forEach(e=>{ /* plano B: supõe página inteira */
+    const pg=pages[Math.min(e.page,pages.length)-1],W=pg.width,H=pg.height;
+    e.px=e.fx*W;e.pw=W*.012;e.pl=(e.half+e.acc)*W+3;e.y0=e.yt*H;e.y1=e.yb*H;
+  });
+  return false;
 }
 
 /* ---------- desenho ---------- */
@@ -183,17 +225,19 @@ function drawScore(){
   const pg=pages[e?Math.min(e.page,pages.length)-1:0];
   if(!pg){g.clearRect(0,0,c.width,c.height);return}
   if(c.width!==pg.width){c.width=pg.width;c.height=pg.height}
+  g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);
   g.drawImage(pg,0,0);
   if(e){
-    const w=c.width*.012,cx=e.fx*c.width-(e.half+e.acc)*c.width-3-w/2;
-    g.fillStyle='rgba(255,140,0,.42)';
-    g.fillRect(cx-w/2,e.yt*c.height,w,(e.yb-e.yt)*c.height);
+    const cx=e.px-e.pl-e.pw/2;
+    g.fillStyle='rgba(255,140,0,.45)';
+    g.fillRect(cx-e.pw/2,e.y0,e.pw,e.y1-e.y0);
   }
 }
 function drawVio(){
   const c=$('cVio'),g=c.getContext('2d'),e=ev[idx];
   if(!vio||!cal){return}
   if(c.width!==vio.width){c.width=vio.width;c.height=vio.height}
+  g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);
   g.drawImage(vio,0,0);
   if(!e||!e.fg)return;
   const [s,n]=e.fg,k=c.width/900,K=vio.k;
@@ -241,7 +285,7 @@ async function mic(){
   ctx.createMediaStreamSource(st).connect(an);buf=new Float32Array(an.fftSize);
 }
 let lastT=0,nd=0,hist=[],sm=null,wait=false,dipped=false,peak=0,prevR=0;
-let lock=false,tmr;const PAUSE=700;
+let fitOk=true,lock=false,tmr;const PAUSE=700;
 function cancelLock(){clearTimeout(tmr);lock=false;$('tick').classList.remove('on')}
 function accept(){
   lock=true;hold=0;
@@ -321,6 +365,7 @@ async function prepare(){
   pages=await Promise.all([...png].sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true})).map(async f=>shrink(await img(f),1100)));
   ev=buildEvents(await readXml(xml));
   if(!ev.length)throw Error('Nenhuma nota encontrada no MusicXML.');
+  fitOk=fitLayout();
   if(cf){
     const c=JSON.parse(await cf.text());
     const ok=c&&c.strings&&STR.every(s=>c.strings[s]&&c.strings[s].nut&&c.strings[s].ref);
@@ -338,7 +383,7 @@ $('bGo').onclick=async()=>{
     await mic();
     if(ctx.state==='suspended')await ctx.resume();
     await prepare();
-    run=true;hold=0;say('Toque a nota indicada.');loop();
+    run=true;hold=0;say(fitOk?'Toque a nota indicada.':'Toque a nota indicada. (Aviso: não localizei as pautas na imagem; a barra pode ficar fora do lugar.)');loop();
   }catch(e){
     const m={NotAllowedError:'Microfone bloqueado. Clique no cadeado ao lado do endereço e permita o microfone. Dentro do Wix (iframe) isso é bloqueado: abra o link direto.',NotFoundError:'Nenhum microfone encontrado.',NotReadableError:'Outro programa está usando o microfone.'}[e.name];
     say(m||e.message,'var(--bad)');
