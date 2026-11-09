@@ -1,0 +1,18 @@
+[
+  {
+    "titulo": "Ode à Alegria",
+    "pasta": "pecas/ode-alegria",
+    "paginas": ["pagina1.png", "pagina2.png", "pagina3.png"],
+    "musicxml": "partitura.mxl",
+    "calib": "calib.json",
+    "violino": "violino.png"
+  },
+  {
+    "titulo": "Exemplo com duas páginas",
+    "pasta": "pecas/exemplo-duas-paginas",
+    "paginas": ["pagina1.png", "pagina2.png"],
+    "musicxml": "partitura.mxl",
+    "calib": "calib.json",
+    "violino": "violino.png"
+  }
+]
