@@ -179,14 +179,14 @@ function buildEvents(doc){
 }
 
 /* ---------- ajuste da barra às pautas da imagem (funciona com PNG recortado) ---------- */
-let SYS=[];
+let SYS=[],fitInfo=[0,0];
 function staves(cv){
   const w=cv.width,h=cv.height,d=cv.getContext('2d').getImageData(0,0,w,h).data,rows=[];
   for(let y=0;y<h;y++){
     let best=0,run=0,st=0,bs=0;
     for(let x=0;x<w;x++){
       const i=(y*w+x)*4;
-      if(d[i+3]>128&&(d[i]+d[i+1]+d[i+2])/3<150){if(!run)st=x;run++;if(run>best){best=run;bs=st}}else run=0;
+      if(d[i+3]/255*(1-(d[i]+d[i+1]+d[i+2])/765)>.12){if(!run)st=x;run++;if(run>best){best=run;bs=st}}else run=0;
     }
     if(best>.1*w)rows.push([y,bs]);
   }
@@ -195,7 +195,7 @@ function staves(cv){
   const c=ls.map(l=>({y:(l.y0+l.y1)/2,s:l.s})),out=[];
   for(let i=0;i+4<c.length;){
     const dd=[1,2,3,4].map(j=>c[i+j].y-c[i+j-1].y),mn=Math.min(...dd),mx=Math.max(...dd);
-    if(mn>1&&mx<=1.35*mn){out.push({top:c[i].y,h:c[i+4].y-c[i].y,left:Math.min(...c.slice(i,i+5).map(q=>q.s))});i+=5}
+    if(mn>1&&mx<=1.5*mn){out.push({top:c[i].y,h:c[i+4].y-c[i].y,left:Math.min(...c.slice(i,i+5).map(q=>q.s))});i+=5}
     else i++;
   }
   return out;
@@ -203,6 +203,7 @@ function staves(cv){
 function fitLayout(){
   const flat=[];
   pages.forEach((pg,pi)=>staves(pg).forEach(st=>flat.push({...st,page:pi+1})));
+  fitInfo=[flat.length,SYS.length];
   if(flat.length===SYS.length&&flat.length){
     ev.forEach(e=>{
       const st=flat[e.sys],k=st.h/STAFF;
@@ -383,7 +384,7 @@ $('bGo').onclick=async()=>{
     await mic();
     if(ctx.state==='suspended')await ctx.resume();
     await prepare();
-    run=true;hold=0;say(fitOk?'Toque a nota indicada.':'Toque a nota indicada. (Aviso: não localizei as pautas na imagem; a barra pode ficar fora do lugar.)');loop();
+    run=true;hold=0;say(fitOk?'Toque a nota indicada.':`Aviso: achei ${fitInfo[0]} pauta(s) na imagem, mas o MusicXML tem ${fitInfo[1]} linha(s) de música. A barra pode ficar fora do lugar.`,fitOk?undefined:'var(--bad)');loop();
   }catch(e){
     const m={NotAllowedError:'Microfone bloqueado. Clique no cadeado ao lado do endereço e permita o microfone. Dentro do Wix (iframe) isso é bloqueado: abra o link direto.',NotFoundError:'Nenhum microfone encontrado.',NotReadableError:'Outro programa está usando o microfone.'}[e.name];
     say(m||e.message,'var(--bad)');
