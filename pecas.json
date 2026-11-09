@@ -2,7 +2,7 @@
   {
     "titulo": "Ode à Alegria",
     "pasta": "pecas/ode-alegria",
-    "paginas": ["pagina1.png", "pagina2.png", "pagina3.png"],
+    "paginas": ["pagina1.png", "pagina2.png", "pagina3.png", "pagina4.png", "pagina5.png"],
     "musicxml": "partitura.mxl",
     "calib": "calib.json",
     "violino": "violino.png"
