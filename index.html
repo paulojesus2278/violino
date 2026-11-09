@@ -123,7 +123,7 @@ function buildEvents(doc){
   const mg=pl.querySelector('page-margins');
   const M={l:num(mg,'left-margin',0),r:num(mg,'right-margin',0),t:num(mg,'top-margin',0)};
   const part=doc.querySelector('part');
-  let page=1,sl=0,sr=0,top=70,dist=85,cur=null,sysList=[],out=[];
+  let page=1,sl=0,sr=0,top=70,dist=85,cur=null,sysList=[],out=[];MS=[];
   let div=1,beats=4,bt=4;
   [...part.querySelectorAll(':scope > measure')].forEach(m=>{
     const w=parseFloat(m.getAttribute('width')||0);
@@ -142,7 +142,7 @@ function buildEvents(doc){
         top:(!cur||np)?M.t+top:cur.top+STAFF+dist};
       sysList.push(cur);
     }
-    const x0=cur.left+cur.x;cur.x+=w;
+    const x0=cur.left+cur.x;cur.x+=w;MS.push({w});
     const at=m.querySelector(':scope > attributes');
     if(at){div=num(at,'divisions',div);beats=num(at,'time > beats',beats);bt=num(at,'time > beat-type',bt)}
     let t=0,last=null;const evs=new Map();
@@ -172,14 +172,14 @@ function buildEvents(doc){
       out.push({midi:Math.min(...e.midis),page:cur.page,
         fx:(x+HEAD)/PW,half:HEAD/PW,acc:e.acc?ACC/PW:0,
         yt:cur.top/PH-15/PH,yb:(cur.top+STAFF+15)/PH,
-        sys:sysList.length-1,xa:x+HEAD,accOn:e.acc});
+        sys:sysList.length-1,xa:x+HEAD,accOn:e.acc,mi:MS.length-1,dx:x-x0+HEAD});
     });
   });
   SYS=sysList;return out; /* repetições (|: :|) não são expandidas neste protótipo */
 }
 
 /* ---------- ajuste da barra às pautas da imagem (funciona com PNG recortado) ---------- */
-let SYS=[],fitInfo=[0,0];
+let SYS=[],MS=[],fitInfo=[0,0,0];
 function staves(cv){
   const w=cv.width,h=cv.height,d=cv.getContext('2d').getImageData(0,0,w,h).data,rows=[];
   for(let y=0;y<h;y++){
@@ -188,14 +188,14 @@ function staves(cv){
       const i=(y*w+x)*4;
       if(d[i+3]/255*(1-(d[i]+d[i+1]+d[i+2])/765)>.12){if(!run)st=x;run++;if(run>best){best=run;bs=st}}else run=0;
     }
-    if(best>.1*w)rows.push([y,bs]);
+    if(best>.1*w)rows.push([y,bs,bs+best]);
   }
   const ls=[];
-  for(const [y,sx] of rows){const L=ls[ls.length-1];if(L&&y-L.y1<=1){L.y1=y;L.s=Math.min(L.s,sx)}else ls.push({y0:y,y1:y,s:sx})}
-  const c=ls.map(l=>({y:(l.y0+l.y1)/2,s:l.s})),out=[];
+  for(const [y,sx,ex] of rows){const L=ls[ls.length-1];if(L&&y-L.y1<=1){L.y1=y;L.s=Math.min(L.s,sx);L.e=Math.max(L.e,ex)}else ls.push({y0:y,y1:y,s:sx,e:ex})}
+  const c=ls.map(l=>({y:(l.y0+l.y1)/2,s:l.s,e:l.e})),out=[];
   for(let i=0;i+4<c.length;){
     const dd=[1,2,3,4].map(j=>c[i+j].y-c[i+j-1].y),mn=Math.min(...dd),mx=Math.max(...dd);
-    if(mn>1&&mx<=1.5*mn){out.push({top:c[i].y,h:c[i+4].y-c[i].y,left:Math.min(...c.slice(i,i+5).map(q=>q.s))});i+=5}
+    if(mn>1&&mx<=1.5*mn){out.push({top:c[i].y,h:c[i+4].y-c[i].y,left:Math.min(...c.slice(i,i+5).map(q=>q.s)),right:Math.max(...c.slice(i,i+5).map(q=>q.e))});i+=5}
     else i++;
   }
   return out;
@@ -203,21 +203,35 @@ function staves(cv){
 function fitLayout(){
   const flat=[];
   pages.forEach((pg,pi)=>staves(pg).forEach(st=>flat.push({...st,page:pi+1})));
-  fitInfo=[flat.length,SYS.length];
-  if(flat.length===SYS.length&&flat.length){
-    ev.forEach(e=>{
-      const st=flat[e.sys],k=st.h/STAFF;
-      e.page=st.page;e.px=st.left+(e.xa-SYS[e.sys].left)*k;
-      e.pw=Math.max(6,14*k);e.pl=(HEAD+(e.accOn?ACC:0))*k+3;
-      e.y0=st.top-15*k;e.y1=st.top+st.h+15*k;
-    });
-    return true;
+  const place=[];let m=0;
+  for(const st of flat){
+    const k=st.h/STAFF,target=(st.right-st.left)/k;
+    let sum=0,best=m,bd=Infinity;
+    for(let i=m;i<MS.length;i++){
+      sum+=MS[i].w;const d=Math.abs(sum-target);
+      if(d<bd){bd=d;best=i+1}else if(sum>target)break;
+    }
+    let off=0;
+    for(let i=m;i<best;i++){place[i]={st,k,off};off+=MS[i].w}
+    m=best;
   }
-  ev.forEach(e=>{ /* plano B: supõe página inteira */
-    const pg=pages[Math.min(e.page,pages.length)-1],W=pg.width,H=pg.height;
-    e.px=e.fx*W;e.pw=W*.012;e.pl=(e.half+e.acc)*W+3;e.y0=e.yt*H;e.y1=e.yb*H;
+  fitInfo=[flat.length,m,MS.length];
+  if(!flat.length){
+    ev.forEach(e=>{ /* plano B: supõe página inteira */
+      const pg=pages[Math.min(e.page,pages.length)-1],W=pg.width,H=pg.height;
+      e.px=e.fx*W;e.pw=W*.012;e.pl=(e.half+e.acc)*W+3;e.y0=e.yt*H;e.y1=e.yb*H;
+    });
+    return false;
+  }
+  ev.forEach(e=>{
+    const pl=place[e.mi];
+    if(!pl){e.hide=true;return}
+    const st=pl.st,k=pl.k;
+    e.hide=false;e.page=st.page;e.px=st.left+(pl.off+e.dx)*k;
+    e.pw=Math.max(6,14*k);e.pl=(HEAD+(e.accOn?ACC:0))*k+3;
+    e.y0=st.top-15*k;e.y1=st.top+st.h+15*k;
   });
-  return false;
+  return m===MS.length;
 }
 
 /* ---------- desenho ---------- */
@@ -228,7 +242,7 @@ function drawScore(){
   if(c.width!==pg.width){c.width=pg.width;c.height=pg.height}
   g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);
   g.drawImage(pg,0,0);
-  if(e){
+  if(e&&!e.hide){
     const cx=e.px-e.pl-e.pw/2;
     g.fillStyle='rgba(255,140,0,.45)';
     g.fillRect(cx-e.pw/2,e.y0,e.pw,e.y1-e.y0);
@@ -384,7 +398,7 @@ $('bGo').onclick=async()=>{
     await mic();
     if(ctx.state==='suspended')await ctx.resume();
     await prepare();
-    run=true;hold=0;say(fitOk?'Toque a nota indicada.':`Aviso: achei ${fitInfo[0]} pauta(s) na imagem, mas o MusicXML tem ${fitInfo[1]} linha(s) de música. A barra pode ficar fora do lugar.`,fitOk?undefined:'var(--bad)');loop();
+    run=true;hold=0;say(fitOk?'Toque a nota indicada.':`Aviso: as imagens têm ${fitInfo[0]} pauta(s) e cobrem ${fitInfo[1]} de ${fitInfo[2]} compassos da partitura. Confira se enviou todas as linhas/páginas, na ordem. A barra some nos compassos que faltam.`,fitOk?undefined:'var(--bad)');loop();
   }catch(e){
     const m={NotAllowedError:'Microfone bloqueado. Clique no cadeado ao lado do endereço e permita o microfone. Dentro do Wix (iframe) isso é bloqueado: abra o link direto.',NotFoundError:'Nenhum microfone encontrado.',NotReadableError:'Outro programa está usando o microfone.'}[e.name];
     say(m||e.message,'var(--bad)');
