@@ -179,7 +179,8 @@ function buildEvents(doc){
 }
 
 /* ---------- ajuste da barra às pautas da imagem (funciona com PNG recortado) ---------- */
-let SYS=[],MS=[],fitInfo=[0,0,0];
+let SYS=[],MS=[],fitInfo=[0,0,0],BARRA={cor:'#f40101',op:1,larg:3};
+function setBarra(o){BARRA={cor:o.cor||'#f40101',op:o.opacidade??1,larg:o.largura??3}}
 function staves(cv){
   const w=cv.width,h=cv.height,d=cv.getContext('2d').getImageData(0,0,w,h).data,rows=[];
   for(let y=0;y<h;y++){
@@ -211,8 +212,9 @@ function fitLayout(){
       sum+=MS[i].w;const d=Math.abs(sum-target);
       if(d<bd){bd=d;best=i+1}else if(sum>target)break;
     }
-    let off=0;
-    for(let i=m;i<best;i++){place[i]={st,k,off};off+=MS[i].w}
+    let sw=0;for(let i=m;i<best;i++)sw+=MS[i].w;
+    const kx=sw?(st.right-st.left)/sw:k;let off=0;
+    for(let i=m;i<best;i++){place[i]={st,k,kx,off};off+=MS[i].w}
     m=best;
   }
   fitInfo=[flat.length,m,MS.length];
@@ -226,9 +228,9 @@ function fitLayout(){
   ev.forEach(e=>{
     const pl=place[e.mi];
     if(!pl){e.hide=true;return}
-    const st=pl.st,k=pl.k;
-    e.hide=false;e.page=st.page;e.px=st.left+(pl.off+e.dx)*k;
-    e.pw=Math.max(6,14*k);e.pl=(HEAD+(e.accOn?ACC:0))*k+3;
+    const st=pl.st,k=pl.k,kx=pl.kx;
+    e.hide=false;e.page=st.page;e.px=st.left+(pl.off+e.dx)*kx;
+    e.pw=Math.max(3,BARRA.larg*k);e.pl=(HEAD+(e.accOn?ACC:0))*k+3;
     e.y0=st.top-15*k;e.y1=st.top+st.h+15*k;
   });
   return m===MS.length;
@@ -244,8 +246,8 @@ function drawScore(){
   g.drawImage(pg,0,0);
   if(e&&!e.hide){
     const cx=e.px-e.pl-e.pw/2;
-    g.fillStyle='rgba(255,140,0,.45)';
-    g.fillRect(cx-e.pw/2,e.y0,e.pw,e.y1-e.y0);
+    g.globalAlpha=BARRA.op;g.fillStyle=BARRA.cor;
+    g.fillRect(cx-e.pw/2,e.y0,e.pw,e.y1-e.y0);g.globalAlpha=1;
   }
 }
 function drawVio(){
@@ -366,10 +368,12 @@ async function getSources(){
   const i=$('sel').value;
   if(i!==''){
     const p=lista[i],b=p.pasta.replace(/\/?$/,'/');
+    setBarra(p.barra||{});
     say('Carregando a música...');
     return {png:await Promise.all(p.paginas.map(n=>getFile(b,n))),xml:await getFile(b,p.musicxml),
       cf:await getFile(b,p.calib||'calib.json'),vf:await getFile(b,p.violino)};
   }
+  setBarra({});
   return {png:$('fPng').files,xml:$('fXml').files[0],cf:$('fCal').files[0],vf:$('fVio').files[0]};
 }
 
