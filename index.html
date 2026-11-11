@@ -29,25 +29,23 @@ summary{cursor:pointer;font:14px system-ui,sans-serif;margin-bottom:8px}
 .lights i{height:44px;border-radius:6px;background:var(--c);opacity:.16;transition:opacity .05s,box-shadow .05s}
 .lights i.r{--c:#d32f2f}.lights i.o{--c:#f5900c}.lights i.g{--c:#2e9e5b}
 .lights i.on{opacity:1;box-shadow:0 0 14px var(--c)}
+.levels{display:flex;gap:6px;align-items:center;margin-left:auto;flex-wrap:wrap;font:13px system-ui,sans-serif}
+button.lv{background:transparent;color:var(--ink);border:2px solid var(--c);padding:6px 12px;font-size:13px}
+button.lv.g{--c:#1f7a43}button.lv.o{--c:#e07b00}button.lv.r{--c:#c62828}
+button.lv[aria-checked=true]{background:var(--c);color:#fff}
+button.lv.o[aria-checked=true]{color:#1a1410}
 .lcap{display:flex;justify-content:space-between;font:12px system-ui,sans-serif;opacity:.75}
 #msg{font:600 15px system-ui,sans-serif;min-height:1.5em}
 </style></head><body>
 <h1>Estudo de violino</h1>
 <div class="card"><label>Escolha a música<select id="sel"><option value="">Carregando lista...</option></select></label></div>
-<details class="card"><summary>Usar meus próprios arquivos</summary><div class="files">
-<label>Partitura (PNG: páginas inteiras ou já recortadas)<input id="fPng" type="file" accept="image/*" multiple></label>
-<label>MusicXML (.mxl, .musicxml, .xml)<input id="fXml" type="file" accept=".mxl,.musicxml,.xml"></label>
-<label>Config da partitura (.partitura.json, opcional)<input id="fCfg" type="file" accept=".json"></label>
-<label>Calibração (calib.json)<input id="fCal" type="file" accept=".json"></label>
-<label>Imagem do violino<input id="fVio" type="file" accept="image/*"></label>
-</div></details>
 <div class="card" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
 <button id="bGo">Começar</button><button id="bPrev" class="alt">Nota anterior</button><button id="bSkip" class="alt">Pular nota</button>
-<label style="margin-left:auto">Tolerância: <span id="tolV">25</span> cents<input id="tol" type="range" min="10" max="50" value="25"></label>
+<div class="levels" id="levels" role="radiogroup" aria-label="Nível de dificuldade"><span>Nível:</span><button type="button" class="lv g" data-lv="0" role="radio">Iniciante</button><button type="button" class="lv o" data-lv="1" role="radio">Intermediário</button><button type="button" class="lv r" data-lv="2" role="radio">Avançado</button></div>
 <label>Lá =<input id="a4" type="number" value="440" min="415" max="466" style="width:64px"> Hz</label>
 </div>
 <div class="grid">
-<div class="card"><canvas id="cScore" width="800" height="500"></canvas></div>
+<div class="card"><div id="sMsg" role="status" style="font:600 15px system-ui,sans-serif;min-height:1.5em;margin-bottom:6px"></div><canvas id="cScore" width="800" height="500"></canvas></div>
 <div>
 <div class="card">
 <div style="display:flex;align-items:center;gap:14px"><div class="big" id="target">–</div><svg id="tick" viewBox="0 0 52 52" width="56" height="56" aria-hidden="true"><path d="M7 29 L20 42 L46 9" fill="none" stroke="var(--ok)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" pathLength="1"/></svg></div>
@@ -58,8 +56,8 @@ summary{cursor:pointer;font:14px system-ui,sans-serif;margin-bottom:8px}
 <div>Você toca: <b id="heard">–</b> <span id="cents"></span></div>
 <div class="lights" id="lights" role="img" aria-label="Indicador de afinação: vermelho, laranja, verde, laranja, vermelho"><i class="r"></i><i class="o"></i><i class="g"></i><i class="o"></i><i class="r"></i></div>
 <div class="lcap"><span>Baixo</span><span>Afinado</span><span>Alto</span></div>
-<div class="lcap" id="zinfo" style="justify-content:center;margin-top:2px"></div>
-<div id="msg" role="status">Carregue os arquivos e clique em Começar.</div>
+
+<div id="msg" role="status">Escolha a música e clique em Começar.</div>
 </div></div></div>
 <script>
 const $=id=>document.getElementById(id);
@@ -85,7 +83,7 @@ function pageCanvas(im,L,maxW=1600){
   if(full){
     if(C){R=C;sr=[C[0]*nw,C[1]*nh,(C[2]-C[0])*nw,(C[3]-C[1])*nh]}
   }else{
-    if(!C)throw Error('A imagem da partitura não é uma página inteira. Use as páginas inteiras exportadas do MuseScore ou envie também o arquivo .partitura.json (que tem o "crop").');
+    if(!C)throw Error('A imagem da partitura não é uma página inteira. Coloque as páginas inteiras exportadas do MuseScore ou adicione o arquivo .partitura.json (que tem o "crop") à música no pecas.json.');
     R=C;pageW=nw/(C[2]-C[0]);
     if(Math.abs(ar/((C[2]-C[0])*L.PW/((C[3]-C[1])*L.PH))-1)>.04)
       scoreWarn.push('Uma das imagens não tem a proporção do recorte (crop) do .partitura.json. A barra pode ficar fora do lugar.');
@@ -96,6 +94,7 @@ function pageCanvas(im,L,maxW=1600){
   g.drawImage(im,sr[0],sr[1],sr[2],sr[3],0,0,c.width,c.height);
   c.region=R;c.pageW=pageW;return c;
 }
+const scoreMsg=(t,c)=>{$('sMsg').textContent=t||'';$('sMsg').style.color=c||'inherit'};
 const say=(t,c)=>{$('msg').textContent=t;$('msg').style.color=c||'inherit'};
 
 /* ---------- calibração (mesma lógica do programa em Python) ---------- */
@@ -311,7 +310,7 @@ function buildScore(doc){
 function refineLayout(built,tops){
   const L=built.layout,total=tops.reduce((a,t)=>a+t.length,0),nsys=L.systems.length;
   if(total!==nsys){
-    scoreWarn.push(`Achei ${total} linhas de música nas imagens, mas o MusicXML tem ${nsys}. Usei só as posições do MusicXML (confira se enviou todas as páginas, na ordem).`);
+    scoreWarn.push(`Achei ${total} linhas de música nas imagens, mas o MusicXML tem ${nsys}. Usei só as posições do MusicXML (confira se todas as páginas foram colocadas, na ordem).`);
     return false;
   }
   let k=0;
@@ -436,7 +435,7 @@ const LT=[...document.querySelectorAll('#lights i')];let lastHeard=0;
    verde: dentro da tolerância | laranja: até 2x a tolerância | vermelho: além disso */
 function setLights(c){
   let on=-1;
-  if(c!==null){const tol=+$('tol').value,a=Math.abs(c),L=a<=tol?0:a<=2*tol?1:2;on=c<0?2-L:2+L}
+  if(c!==null){const a=Math.abs(c),L=a<=TOL?0:a<=Math.min(2*TOL,50)?1:2;on=c<0?2-L:2+L}
   LT.forEach((el,i)=>el.classList.toggle('on',i===on));
 }
 let lastT=0,nd=0,hist=[],sm=null,wait=false,dipped=false,peak=0,prevR=0;
@@ -455,7 +454,7 @@ function accept(){
 function advance(){
   const old=ev[idx].midi;hold=0;setLights(null);
   if(idx<ev.length-1){idx++;wait=ev[idx].midi===old;dipped=false;peak=lastRms;show();return}
-  say('Fim da peça. Parabéns!','var(--ok)');run=false;
+  say('Fim da peça. Parabéns!','var(--ok)');run=false;letSleep();
 }
 function loop(ts){
   if(!run)return;
@@ -463,7 +462,7 @@ function loop(ts){
   if(ts-lastT<50)return;
   lastT=ts||0;if(lock)return;
   an.getFloatTimeDomainData(buf);
-  const f=yin(buf,ctx.sampleRate),e=ev[idx],A=+$('a4').value||440,tol=+$('tol').value,r=lastRms;
+  const f=yin(buf,ctx.sampleRate),e=ev[idx],A=+$('a4').value||440,tol=TOL,r=lastRms;
   if(wait&&!dipped){
     peak=Math.max(peak,r);
     if(!f||r<peak*.5||(r>prevR*1.6&&r>.02))dipped=true;
@@ -495,7 +494,7 @@ fetch('pecas.json').then(r=>r.json()).then(j=>{
   lista=j;const s=$('sel');s.innerHTML='';
   s.add(new Option('Escolha uma música...',''));
   j.forEach((p,i)=>s.add(new Option(p.titulo,i)));
-}).catch(()=>{$('sel').innerHTML='<option value="">Lista indisponível (use seus arquivos abaixo)</option>'});
+}).catch(()=>{$('sel').innerHTML='<option value="">Lista de músicas indisponível</option>'});
 async function getFile(base,name){
   const r=await fetch(base+name);
   if(!r.ok)throw Error('Arquivo não encontrado: '+base+name);
@@ -505,18 +504,18 @@ async function getSources(){
   const i=$('sel').value;
   if(i!==''){
     const p=lista[i],b=p.pasta.replace(/\/?$/,'/');
-    say('Carregando a música...');
+    scoreMsg('Carregando a partitura...');
     return {png:await Promise.all(p.paginas.map(n=>getFile(b,n))),xml:await getFile(b,p.musicxml),
       cf:await getFile(b,p.calib||'calib.json'),vf:await getFile(b,p.violino),
       pf:p.partitura?await getFile(b,p.partitura):null,barra:p.barra||{}};
   }
-  return {png:$('fPng').files,xml:$('fXml').files[0],cf:$('fCal').files[0],vf:$('fVio').files[0],pf:$('fCfg').files[0]||null,barra:{}};
+  throw Error('Escolha uma música na lista.');
 }
 
 /* ---------- eventos ---------- */
 async function prepare(){
   const {png,xml,cf,vf,pf,barra}=await getSources();
-  if(!png.length||!xml)throw Error('Escolha uma música na lista (ou envie seus próprios arquivos).');
+  if(!png.length||!xml)throw Error('Escolha uma música na lista.');
   scoreWarn=[];
   CFG=await loadCfg(pf);
   if(barra.cor)CFG.bar.color=barra.cor;
@@ -531,7 +530,7 @@ async function prepare(){
   /* como no programa: as pautas vistas nas imagens dizem a página e a altura de cada linha de música */
   const tops=pages.map(pg=>staves(pg).map(s=>pg.region[1]+s.top/pg.height*(pg.region[3]-pg.region[1])));
   if(!refineLayout(SC,tops))normalizePages(L);
-  if(pages.length<L.npages)scoreWarn.push(`A partitura tem ${L.npages} página(s), mas só ${pages.length} imagem(ns) foram enviadas. A barra some onde faltar página.`);
+  if(pages.length<L.npages)scoreWarn.push(`A partitura tem ${L.npages} página(s), mas só ${pages.length} imagem(ns) foram colocadas. A barra some onde faltar página.`);
   BP=barParams();
   ev=SC.seq.map(([mi,ei])=>{
     const info=evInfo(mi,ei);
@@ -548,23 +547,48 @@ async function prepare(){
   if(vf)vio=shrink(await img(vf),900);
   fingerings();idx=0;wait=false;cancelLock();show();
 }
-$('bGo').onclick=async()=>{
+/* mantém a tela acesa enquanto o aluno toca (Wake Lock; precisa de Chrome/Android ou Safari 16.4+) */
+let wl=null;
+async function keepAwake(){
   try{
-    run=false;
+    if(!('wakeLock' in navigator)||wl)return;
+    wl=await navigator.wakeLock.request('screen');
+    wl.addEventListener('release',()=>{wl=null});
+  }catch(_){wl=null}
+}
+function letSleep(){try{if(wl)wl.release()}catch(_){}wl=null}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&run)keepAwake()});
+
+$('bGo').onclick=async()=>{
+  let stage='mic';
+  try{
+    run=false;scoreMsg('');keepAwake();
     if(!window.isSecureContext||!navigator.mediaDevices)throw Error('Microfone indisponível: a página precisa abrir por https:// (ou localhost). Endereço atual: '+location.protocol);
     say('Pedindo acesso ao microfone...');
     await mic();
     if(ctx.state==='suspended')await ctx.resume();
+    stage='load';say('');
     await prepare();
-    run=true;hold=0;say(fitOk?'Toque a nota indicada.':'Aviso: '+scoreWarn.join(' '),fitOk?undefined:'var(--bad)');loop();
+    scoreMsg(fitOk?'':'Aviso: '+scoreWarn.join(' '),fitOk?undefined:'var(--bad)');
+    run=true;hold=0;say('Toque a nota indicada.');loop();
   }catch(e){
+    letSleep();
     const m={NotAllowedError:'Microfone bloqueado. Clique no cadeado ao lado do endereço e permita o microfone. Dentro do Wix (iframe) isso é bloqueado: abra o link direto.',NotFoundError:'Nenhum microfone encontrado.',NotReadableError:'Outro programa está usando o microfone.'}[e.name];
-    say(m||e.message,'var(--bad)');
+    if(stage==='load'){scoreMsg(m||e.message,'var(--bad)');say('')}else say(m||e.message,'var(--bad)');
   }
 };
 $('bSkip').onclick=()=>{wait=false;cancelLock();if(idx<ev.length-1){idx++;show()}};
 $('bPrev').onclick=()=>{wait=false;cancelLock();if(idx>0){idx--;show()}};
-const setZone=()=>{const t=+$('tol').value;$('tolV').textContent=t;$('zinfo').textContent=`Verde: até ${t} cents · laranja: até ${2*t} cents · vermelho: além`;if(typeof LT!=='undefined'&&run===false)setLights(null)};
-$('tol').oninput=setZone;setZone();
+/* níveis: tolerância (cents) para o verde. Laranja vai até 2x isso (no máximo 50). Mude os números aqui se quiser. */
+const NIVEIS=[30,20,12];let TOL=20;
+function setLevel(i,save){
+  TOL=NIVEIS[i];
+  document.querySelectorAll('#levels .lv').forEach(b=>b.setAttribute('aria-checked',+b.dataset.lv===i?'true':'false'));
+  if(save){try{localStorage.setItem('nivel',i)}catch(_){}}
+  hold=0;setLights(null);
+}
+document.querySelectorAll('#levels .lv').forEach(b=>b.onclick=()=>setLevel(+b.dataset.lv,true));
+let nivelSalvo=1;try{const v=+localStorage.getItem('nivel');if(v>=0&&v<=2&&localStorage.getItem('nivel')!==null)nivelSalvo=v}catch(_){}
+setLevel(nivelSalvo,false);
 </script>
 </body></html>
