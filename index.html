@@ -25,8 +25,8 @@ summary{cursor:pointer;font:14px system-ui,sans-serif;margin-bottom:8px}
 @media(prefers-reduced-motion:reduce){#tick.on path{animation:none;stroke-dashoffset:0}}
 .big{font-size:2.2rem;font-weight:700;line-height:1.1}
 .info{font:15px system-ui,sans-serif;display:flex;gap:18px;flex-wrap:wrap;margin:6px 0}
-.meter{position:relative;height:34px;border:1px solid var(--line);border-radius:4px;margin:8px 0;background:linear-gradient(90deg,transparent 42%,color-mix(in srgb,var(--ok) 30%,transparent) 42% 58%,transparent 58%)}
-.meter i{position:absolute;top:0;bottom:0;width:4px;left:50%;background:var(--ink);transition:left .3s}
+.meter{position:relative;height:34px;border:1px solid var(--line);border-radius:4px;margin:8px 0;--z:22.5%;background:linear-gradient(90deg,transparent calc(50% - var(--z)),color-mix(in srgb,var(--ok) 30%,transparent) calc(50% - var(--z)) calc(50% + var(--z)),transparent calc(50% + var(--z)))}
+.meter i{position:absolute;top:0;bottom:0;width:4px;left:50%;background:var(--ink);transition:left .08s linear,opacity .2s}
 .meter b{position:absolute;left:50%;top:0;bottom:0;border-left:1px dashed var(--line)}
 #msg{font:600 15px system-ui,sans-serif;min-height:1.5em}
 </style></head><body>
@@ -54,7 +54,7 @@ summary{cursor:pointer;font:14px system-ui,sans-serif;margin-bottom:8px}
 </div>
 <div class="card">
 <div>Você toca: <b id="heard">–</b> <span id="cents"></span></div>
-<div class="meter" aria-label="Afinação"><b></b><i id="needle"></i></div>
+<div class="meter" id="meter" aria-label="Afinação"><b></b><i id="needle"></i></div>
 <div id="msg" role="status">Carregue os arquivos e clique em Começar.</div>
 </div></div></div>
 <script>
@@ -427,6 +427,7 @@ async function mic(){
   ctx=new AudioContext();an=ctx.createAnalyser();an.fftSize=4096;
   ctx.createMediaStreamSource(st).connect(an);buf=new Float32Array(an.fftSize);
 }
+function setNeedle(v,op){$('needle').style.left=(50+v*.9)+'%';$('needle').style.opacity=op}
 let lastT=0,nd=0,hist=[],sm=null,wait=false,dipped=false,peak=0,prevR=0;
 let fitOk=true,lock=false,tmr;const PAUSE=700;
 function cancelLock(){clearTimeout(tmr);lock=false;$('tick').classList.remove('on')}
@@ -441,7 +442,7 @@ function accept(){
   },PAUSE);
 }
 function advance(){
-  const old=ev[idx].midi;hold=0;
+  const old=ev[idx].midi;hold=0;nd=0;setNeedle(0,.25);
   if(idx<ev.length-1){idx++;wait=ev[idx].midi===old;dipped=false;peak=lastRms;show();return}
   say('Fim da peça. Parabéns!','var(--ok)');run=false;
 }
@@ -457,7 +458,7 @@ function loop(ts){
     if(!f||r<peak*.5||(r>prevR*1.6&&r>.02))dipped=true;
   }
   prevR=r;
-  if(!f||!e){hist=[];sm=null;hold=0;$('heard').textContent='–';$('cents').textContent='';return}
+  if(!f||!e){hist=[];sm=null;hold=0;$('heard').textContent='–';$('cents').textContent='';nd*=.8;setNeedle(nd,.25);return}
   hist.push(69+12*Math.log2(f/A));if(hist.length>7)hist.shift();
   const med=[...hist].sort((x,y)=>x-y)[hist.length>>1];
   sm=(sm===null||Math.abs(med-sm)>.7)?med:sm+(med-sm)*.2;
@@ -465,8 +466,8 @@ function loop(ts){
   $('heard').textContent=nm(near);
   const cd=Math.round(cents/5)*5,cc=Math.max(-50,Math.min(50,cents));
   $('cents').textContent=(cd>0?'+':'')+cd+' cents';
-  if(Math.abs(cc-nd)>2)nd+=(cc-nd)*.15;
-  $('needle').style.left=(50+nd*.9)+'%';
+  nd+=(cc-nd)*.5;
+  setNeedle(nd,near===e.midi?1:.35);
   if(wait&&!dipped){hold=0;say('Mesma nota de novo: pare ou troque o arco e toque outra vez.');return}
   wait=false;
   if(near===e.midi&&Math.abs(cents)<=tol){
@@ -553,6 +554,7 @@ $('bGo').onclick=async()=>{
 };
 $('bSkip').onclick=()=>{wait=false;cancelLock();if(idx<ev.length-1){idx++;show()}};
 $('bPrev').onclick=()=>{wait=false;cancelLock();if(idx>0){idx--;show()}};
-$('tol').oninput=e=>$('tolV').textContent=e.target.value;
+const setZone=()=>{$('tolV').textContent=$('tol').value;$('meter').style.setProperty('--z',(+$('tol').value*.9)+'%')};
+$('tol').oninput=setZone;setZone();
 </script>
 </body></html>
