@@ -175,7 +175,8 @@ function staves(cv){
    As pautas vistas nas imagens corrigem página e altura (refine_layout),
    o "crop" e os ajustes vêm do .partitura.json gerado pelo programa. */
 const BAR_DEF={width:4,color:'#f40101',alpha:1,pad:15,anchor:'before',gap:2};
-let CFG=null,SC=null,BP=null,scoreWarn=[];
+let CFG=null,SC=null,BP=null,scoreWarn=[],techWarn=[];
+const DEBUG=new URLSearchParams(location.search).has('teste');
 
 function pageMargin(M,page){
   const odd=((BigInt(page)%2n)+2n)%2n===1n;
@@ -319,7 +320,8 @@ function buildScore(doc){
 function refineLayout(built,tops){
   const L=built.layout,total=tops.reduce((a,t)=>a+t.length,0),nsys=L.systems.length;
   if(total!==nsys){
-    scoreWarn.push(`Achei ${total} linhas de música nas imagens, mas o MusicXML tem ${nsys}. Usei só as posições do MusicXML (confira se todas as páginas foram colocadas, na ordem).`);
+    techWarn.push(`Achei ${total} linhas de música nas imagens, mas o MusicXML tem ${nsys}. Linhas achadas por imagem: ${tops.map((t,i)=>'página '+(i+1)+': '+t.length).join(' | ')}. Usei só as posições do MusicXML.`);
+    console.warn(techWarn[techWarn.length-1]);
     return false;
   }
   let k=0;
@@ -525,7 +527,7 @@ async function getSources(){
 async function prepare(){
   const {png,xml,cf,vf,pf,barra}=await getSources();
   if(!png.length||!xml)throw Error('Escolha uma música na lista.');
-  scoreWarn=[];
+  scoreWarn=[];techWarn=[];
   CFG=await loadCfg(pf);
   if(barra.cor)CFG.bar.color=barra.cor;
   if(barra.opacidade!=null)CFG.bar.alpha=barra.opacidade;
@@ -546,6 +548,7 @@ async function prepare(){
     return {midi:Math.min(...SC.per[mi][ei].pitches),mi,ei,info,page:info.page,hide:info.page>pages.length};
   });
   if(!ev.length)throw Error('Nenhuma nota encontrada no MusicXML.');
+  if(DEBUG)scoreWarn.push(...techWarn);
   fitOk=!scoreWarn.length;
   if(cf){
     const c=JSON.parse(await cf.text());
