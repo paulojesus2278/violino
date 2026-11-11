@@ -10,7 +10,7 @@
   },
   {
     "titulo": "Suzuki 9 Perpetual Motion",
-    "pasta": "Suzuki 9/",
+    "pasta": "Suzuki9/",
     "paginas": ["pagina-1.png", "pagina-2.png", "pagina-3.png", "pagina-4.png", "pagina-5.png"],
     "musicxml": "partitura.mxl",
     "partitura": "partitura.json",
