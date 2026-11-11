@@ -1,18 +1,9 @@
-[
-  {
-    "titulo": "Ode à Alegria",
-    "pasta": "pecas/ode-alegria",
-    "paginas": ["pagina1.png", "pagina2.png", "pagina3.png", "pagina4.png", "pagina5.png"],
-    "musicxml": "partitura.mxl",
-    "calib": "calib.json",
-    "violino": "violino.png"
-  },
-  {
-    "titulo": "Exemplo com duas páginas",
-    "pasta": "pecas/exemplo-duas-paginas",
-    "paginas": ["pagina1.png", "pagina2.png"],
-    "musicxml": "partitura.mxl",
-    "calib": "calib.json",
-    "violino": "violino.png"
-  }
-]
+{
+  "titulo": "Suzuki 10 Allegretto",
+  "pasta": "suzuki10/",
+  "paginas": ["pagina-1.png", "pagina-2.png", "pagina-3.png", "pagina-4.png", "pagina-5.png"],
+  "musicxml": "partitura.mxl",
+  "partitura": "SUZUKI_10_ALLEGRETTO_partitura.json",
+  "calib": "calib.json",
+  "violino": "violino.png"
+}
