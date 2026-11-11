@@ -2,50 +2,59 @@
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Estudo de violino</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
-:root{--bg:#f4efe8;--ink:#2a1d14;--card:#fffaf2;--line:#d9ccbb;--ac:#8a3b12;--ok:#2e7d4f;--bad:#b3261e;color-scheme:light}
-@media (prefers-color-scheme:dark){:root{--bg:#1a1410;--ink:#f1e6d8;--card:#261c15;--line:#4a3a2c;--ac:#e0a060;--ok:#6fcf97;--bad:#ff8a80;color-scheme:dark}}
+:root{--bg:#fff;--ink:#232324;--dark:#1a1a1a;--card:#f9f9f9;--line:#e3e3e3;--bd:#8c8c8c;--ac:#ff6600;--ok:#2e7d4f;--bad:#c62828;color-scheme:light}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Georgia,serif;padding:12px}
-h1{font-size:1.4rem;margin:0 0 8px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:12px;margin-bottom:12px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Poppins,system-ui,sans-serif;padding:12px}
+h1{font-size:1.4rem;font-weight:700;margin:0 0 12px;padding-left:10px;border-left:5px solid var(--ac)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
 .files{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px}
-label{font:13px system-ui,sans-serif;display:block}
+label{font:13px Poppins,system-ui,sans-serif;display:block}
 input[type=file]{width:100%;font-size:12px}
-button{font:600 14px system-ui,sans-serif;background:var(--ac);color:var(--bg);border:0;border-radius:4px;padding:8px 14px;cursor:pointer}
-button.alt{background:transparent;color:var(--ink);border:1px solid var(--line)}
+button{font:600 14px Poppins,system-ui,sans-serif;background:var(--dark);color:#fff;border:0;border-radius:10px;padding:10px 18px;cursor:pointer}
+button:hover{background:var(--ac);color:var(--dark)}
+button.alt{background:#fff;color:var(--dark);border:1.5px solid var(--dark)}
+button.alt:hover{background:#eee;color:var(--dark)}
 button:focus-visible,input:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
-canvas{width:100%;height:auto;display:block;background:#fff;border-radius:4px}
+canvas{width:100%;height:auto;display:block;background:#fff;border-radius:8px}
 .grid{display:grid;grid-template-columns:3fr 2fr;gap:12px}
 @media(max-width:800px){.grid{grid-template-columns:1fr}}
-select{width:100%;font:16px system-ui,sans-serif;padding:8px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:4px}
-summary{cursor:pointer;font:14px system-ui,sans-serif;margin-bottom:8px}
+select{width:100%;font:16px Poppins,system-ui,sans-serif;padding:8px;background:#fff;color:var(--ink);border:1px solid var(--bd);border-radius:8px}
+summary{cursor:pointer;font:14px Poppins,system-ui,sans-serif;margin-bottom:8px}
 #tick{opacity:0}#tick.on{opacity:1}#tick path{stroke-dasharray:1;stroke-dashoffset:1}#tick.on path{animation:draw .3s ease-out forwards}@keyframes draw{to{stroke-dashoffset:0}}
 @media(prefers-reduced-motion:reduce){#tick.on path{animation:none;stroke-dashoffset:0}}
 .big{font-size:2.2rem;font-weight:700;line-height:1.1}
-.info{font:15px system-ui,sans-serif;display:flex;gap:18px;flex-wrap:wrap;margin:6px 0}
+.info{font:15px Poppins,system-ui,sans-serif;display:flex;gap:18px;flex-wrap:wrap;margin:6px 0}
 .lights{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:10px 0 2px}
 .lights i{height:44px;border-radius:6px;background:var(--c);opacity:.16;transition:opacity .05s,box-shadow .05s}
 .lights i.r{--c:#d32f2f}.lights i.o{--c:#f5900c}.lights i.g{--c:#2e9e5b}
 .lights i.on{opacity:1;box-shadow:0 0 14px var(--c)}
-.levels{display:flex;gap:6px;align-items:center;margin-left:auto;flex-wrap:wrap;font:13px system-ui,sans-serif}
-button.lv{background:transparent;color:var(--ink);border:2px solid var(--c);padding:6px 12px;font-size:13px}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.la{flex-basis:100%;display:flex;gap:6px;align-items:center}
+.navbtns{display:flex;gap:8px;margin-top:10px}
+.navbtns button{flex:1}
+.levels{display:flex;gap:6px;align-items:center;margin-left:auto;flex-wrap:wrap;font:13px Poppins,system-ui,sans-serif}
+button.lv{background:#fff;color:var(--ink);border:2px solid var(--c);min-width:42px;padding:6px 0;font-size:15px;border-radius:8px}
+button.lv:hover{background:#eee;color:var(--ink)}
 button.lv.g{--c:#1f7a43}button.lv.o{--c:#e07b00}button.lv.r{--c:#c62828}
-button.lv[aria-checked=true]{background:var(--c);color:#fff}
-button.lv.o[aria-checked=true]{color:#1a1410}
-.lcap{display:flex;justify-content:space-between;font:12px system-ui,sans-serif;opacity:.75}
-#msg{font:600 15px system-ui,sans-serif;min-height:1.5em}
+button.lv[aria-checked=true],button.lv[aria-checked=true]:hover{background:var(--c);color:#fff}
+button.lv.o[aria-checked=true],button.lv.o[aria-checked=true]:hover{color:#1a1a1a}
+.lcap{display:flex;justify-content:space-between;font:12px Poppins,system-ui,sans-serif;opacity:.75}
+#msg{font:600 15px Poppins,system-ui,sans-serif;min-height:1.5em}
 </style></head><body>
 <h1>Estudo de violino</h1>
 <div class="card"><label>Escolha a música<select id="sel"><option value="">Carregando lista...</option></select></label></div>
-<div class="card" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-<button id="bGo">Começar</button><button id="bPrev" class="alt">Nota anterior</button><button id="bSkip" class="alt">Pular nota</button>
-<div class="levels" id="levels" role="radiogroup" aria-label="Nível de dificuldade"><span>Nível:</span><button type="button" class="lv g" data-lv="0" role="radio">Iniciante</button><button type="button" class="lv o" data-lv="1" role="radio">Intermediário</button><button type="button" class="lv r" data-lv="2" role="radio">Avançado</button></div>
-<label>Lá =<input id="a4" type="number" value="440" min="415" max="466" style="width:64px"> Hz</label>
+<div class="card controls">
+<button id="bGo">Começar</button>
+<div class="levels" id="levels" role="radiogroup" aria-label="Nível de dificuldade"><span>Nível:</span><button type="button" class="lv g" data-lv="0" role="radio" aria-label="Nível 1, iniciante" title="Nível 1 - iniciante">1</button><button type="button" class="lv o" data-lv="1" role="radio" aria-label="Nível 2, intermediário" title="Nível 2 - intermediário">2</button><button type="button" class="lv r" data-lv="2" role="radio" aria-label="Nível 3, avançado" title="Nível 3 - avançado">3</button></div>
+<label class="la">Lá =<input id="a4" type="number" value="440" min="415" max="466" style="width:64px"> Hz</label>
 </div>
 <div class="grid">
-<div class="card"><div id="sMsg" role="status" style="font:600 15px system-ui,sans-serif;min-height:1.5em;margin-bottom:6px"></div><canvas id="cScore" width="800" height="500"></canvas></div>
+<div class="card"><div id="sMsg" role="status" style="font:600 15px Poppins,system-ui,sans-serif;min-height:1.5em;margin-bottom:6px"></div><canvas id="cScore" width="800" height="500"></canvas>
+<div class="navbtns"><button id="bPrev" class="alt">Nota anterior</button><button id="bSkip" class="alt">Pular nota</button></div></div>
 <div>
 <div class="card">
 <div style="display:flex;align-items:center;gap:14px"><div class="big" id="target">–</div><svg id="tick" viewBox="0 0 52 52" width="56" height="56" aria-hidden="true"><path d="M7 29 L20 42 L46 9" fill="none" stroke="var(--ok)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" pathLength="1"/></svg></div>
