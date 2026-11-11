@@ -1,0 +1,35 @@
+{
+ "pages": [
+  "C:\\Users\\paulo\\Desktop\\PROJETO VIOLINO AUTOMATO\\SUZUKI 10 ALLEGRETTO - site test-1.png",
+  "C:\\Users\\paulo\\Desktop\\PROJETO VIOLINO AUTOMATO\\SUZUKI 10 ALLEGRETTO - site test-2.png",
+  "C:\\Users\\paulo\\Desktop\\PROJETO VIOLINO AUTOMATO\\SUZUKI 10 ALLEGRETTO - site test-3.png",
+  "C:\\Users\\paulo\\Desktop\\PROJETO VIOLINO AUTOMATO\\SUZUKI 10 ALLEGRETTO - site test-4.png",
+  "C:\\Users\\paulo\\Desktop\\PROJETO VIOLINO AUTOMATO\\SUZUKI 10 ALLEGRETTO - site test-5.png"
+ ],
+ "adjust": {
+  "pages": {},
+  "systems": {},
+  "notes": {}
+ },
+ "bar": {
+  "width": 4.0,
+  "color": "#f40101",
+  "alpha": 1.0,
+  "pad": 15,
+  "anchor": "before",
+  "gap": 2.0
+ },
+ "page_lead": 0.0,
+ "musicxml": "C:\\Users\\paulo\\Desktop\\PROJETO VIOLINO AUTOMATO\\partitura.mxl",
+ "place": {
+  "x": 98.08,
+  "y": 704.637,
+  "scale": 0.186
+ },
+ "crop": [
+  0.01778,
+  0.0569,
+  0.98582,
+  0.14734
+ ]
+}
