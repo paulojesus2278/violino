@@ -25,9 +25,11 @@ summary{cursor:pointer;font:14px system-ui,sans-serif;margin-bottom:8px}
 @media(prefers-reduced-motion:reduce){#tick.on path{animation:none;stroke-dashoffset:0}}
 .big{font-size:2.2rem;font-weight:700;line-height:1.1}
 .info{font:15px system-ui,sans-serif;display:flex;gap:18px;flex-wrap:wrap;margin:6px 0}
-.meter{position:relative;height:34px;border:1px solid var(--line);border-radius:4px;margin:8px 0;--z:22.5%;background:linear-gradient(90deg,transparent calc(50% - var(--z)),color-mix(in srgb,var(--ok) 30%,transparent) calc(50% - var(--z)) calc(50% + var(--z)),transparent calc(50% + var(--z)))}
-.meter i{position:absolute;top:0;bottom:0;width:4px;left:50%;background:var(--ink);transition:left .08s linear,opacity .2s}
-.meter b{position:absolute;left:50%;top:0;bottom:0;border-left:1px dashed var(--line)}
+.lights{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:10px 0 2px}
+.lights i{height:44px;border-radius:6px;background:var(--c);opacity:.16;transition:opacity .05s,box-shadow .05s}
+.lights i.r{--c:#d32f2f}.lights i.o{--c:#f5900c}.lights i.g{--c:#2e9e5b}
+.lights i.on{opacity:1;box-shadow:0 0 14px var(--c)}
+.lcap{display:flex;justify-content:space-between;font:12px system-ui,sans-serif;opacity:.75}
 #msg{font:600 15px system-ui,sans-serif;min-height:1.5em}
 </style></head><body>
 <h1>Estudo de violino</h1>
@@ -54,7 +56,9 @@ summary{cursor:pointer;font:14px system-ui,sans-serif;margin-bottom:8px}
 </div>
 <div class="card">
 <div>Você toca: <b id="heard">–</b> <span id="cents"></span></div>
-<div class="meter" id="meter" aria-label="Afinação"><b></b><i id="needle"></i></div>
+<div class="lights" id="lights" role="img" aria-label="Indicador de afinação: vermelho, laranja, verde, laranja, vermelho"><i class="r"></i><i class="o"></i><i class="g"></i><i class="o"></i><i class="r"></i></div>
+<div class="lcap"><span>Baixo</span><span>Afinado</span><span>Alto</span></div>
+<div class="lcap" id="zinfo" style="justify-content:center;margin-top:2px"></div>
 <div id="msg" role="status">Carregue os arquivos e clique em Começar.</div>
 </div></div></div>
 <script>
@@ -400,7 +404,7 @@ function show(){
   $('str').textContent='Corda: '+(e.fg?e.fg[0]+(e.fg[1]===0?' solta':''):'–');
   $('fing').textContent='Dedo: '+e.finger;
   $('prog').textContent=`Nota ${idx+1} de ${ev.length}`;
-  drawScore();drawVio();
+  setLights(null);drawScore();drawVio();
 }
 
 /* ---------- afinação (YIN) ---------- */
@@ -427,7 +431,14 @@ async function mic(){
   ctx=new AudioContext();an=ctx.createAnalyser();an.fftSize=4096;
   ctx.createMediaStreamSource(st).connect(an);buf=new Float32Array(an.fftSize);
 }
-function setNeedle(v,op){$('needle').style.left=(50+v*.9)+'%';$('needle').style.opacity=op}
+const LT=[...document.querySelectorAll('#lights i')];let lastHeard=0;
+/* c = desvio em cents em relação à nota pedida (null = tudo apagado).
+   verde: dentro da tolerância | laranja: até 2x a tolerância | vermelho: além disso */
+function setLights(c){
+  let on=-1;
+  if(c!==null){const tol=+$('tol').value,a=Math.abs(c),L=a<=tol?0:a<=2*tol?1:2;on=c<0?2-L:2+L}
+  LT.forEach((el,i)=>el.classList.toggle('on',i===on));
+}
 let lastT=0,nd=0,hist=[],sm=null,wait=false,dipped=false,peak=0,prevR=0;
 let fitOk=true,lock=false,tmr;const PAUSE=700;
 function cancelLock(){clearTimeout(tmr);lock=false;$('tick').classList.remove('on')}
@@ -442,7 +453,7 @@ function accept(){
   },PAUSE);
 }
 function advance(){
-  const old=ev[idx].midi;hold=0;nd=0;setNeedle(0,.25);
+  const old=ev[idx].midi;hold=0;setLights(null);
   if(idx<ev.length-1){idx++;wait=ev[idx].midi===old;dipped=false;peak=lastRms;show();return}
   say('Fim da peça. Parabéns!','var(--ok)');run=false;
 }
@@ -458,7 +469,7 @@ function loop(ts){
     if(!f||r<peak*.5||(r>prevR*1.6&&r>.02))dipped=true;
   }
   prevR=r;
-  if(!f||!e){hist=[];sm=null;hold=0;$('heard').textContent='–';$('cents').textContent='';nd*=.8;setNeedle(nd,.25);return}
+  if(!f||!e){hist=[];sm=null;hold=0;$('heard').textContent='–';$('cents').textContent='';if(ts-lastHeard>250)setLights(null);return}
   hist.push(69+12*Math.log2(f/A));if(hist.length>7)hist.shift();
   const med=[...hist].sort((x,y)=>x-y)[hist.length>>1];
   sm=(sm===null||Math.abs(med-sm)>.7)?med:sm+(med-sm)*.2;
@@ -466,8 +477,7 @@ function loop(ts){
   $('heard').textContent=nm(near);
   const cd=Math.round(cents/5)*5,cc=Math.max(-50,Math.min(50,cents));
   $('cents').textContent=(cd>0?'+':'')+cd+' cents';
-  nd+=(cc-nd)*.5;
-  setNeedle(nd,near===e.midi?1:.35);
+  lastHeard=ts;setLights(cents);
   if(wait&&!dipped){hold=0;say('Mesma nota de novo: pare ou troque o arco e toque outra vez.');return}
   wait=false;
   if(near===e.midi&&Math.abs(cents)<=tol){
@@ -554,7 +564,7 @@ $('bGo').onclick=async()=>{
 };
 $('bSkip').onclick=()=>{wait=false;cancelLock();if(idx<ev.length-1){idx++;show()}};
 $('bPrev').onclick=()=>{wait=false;cancelLock();if(idx>0){idx--;show()}};
-const setZone=()=>{$('tolV').textContent=$('tol').value;$('meter').style.setProperty('--z',(+$('tol').value*.9)+'%')};
+const setZone=()=>{const t=+$('tol').value;$('tolV').textContent=t;$('zinfo').textContent=`Verde: até ${t} cents · laranja: até ${2*t} cents · vermelho: além`;if(typeof LT!=='undefined'&&run===false)setLights(null)};
 $('tol').oninput=setZone;setZone();
 </script>
 </body></html>
