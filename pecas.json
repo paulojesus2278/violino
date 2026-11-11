@@ -8,20 +8,13 @@
     "calib": "calib.json",
     "violino": "violino.png"
   },
-  {
-    "titulo": "Ode à Alegria",
-    "pasta": "pecas/ode-alegria",
-    "paginas": ["pagina1.png"],
-    "musicxml": "partitura.musicxml",
-    "calib": "calib.json",
-    "violino": "violino.png"
-  },
-  {
-    "titulo": "Exemplo com duas páginas",
-    "pasta": "pecas/exemplo-duas-paginas",
-    "paginas": ["pagina1.png", "pagina2.png"],
+ {
+    "titulo": "Suzuki 9 Perpetual Motion",
+    "pasta": "Suzuki 9/",
+    "paginas": ["pagina-1.png", "pagina-2.png", "pagina-3.png", "pagina-4.png", "pagina-5.png"],
     "musicxml": "partitura.mxl",
+    "partitura": "partitura.json",
     "calib": "calib.json",
     "violino": "violino.png"
-  }
+ }
 ]
