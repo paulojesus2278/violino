@@ -8,7 +8,7 @@
     "calib": "calib.json",
     "violino": "violino.png"
   },
- {
+  {
     "titulo": "Suzuki 9 Perpetual Motion",
     "pasta": "Suzuki 9/",
     "paginas": ["pagina-1.png", "pagina-2.png", "pagina-3.png", "pagina-4.png", "pagina-5.png"],
@@ -16,5 +16,5 @@
     "partitura": "partitura.json",
     "calib": "calib.json",
     "violino": "violino.png"
- }
+  }
 ]
