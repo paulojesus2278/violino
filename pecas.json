@@ -1,4 +1,22 @@
 [
+    {
+    "titulo": "Suzuki 8 Allegro",
+    "pasta": "suzuki8/",
+    "paginas": ["pagina-1.png", "pagina-2.png", "pagina-3.png", "pagina-4.png"],
+    "musicxml": "partitura.mxl",
+    "partitura": "partitura.json",
+    "calib": "calib.json",
+    "violino": "violino.png"
+   },   
+   {
+    "titulo": "Suzuki 9 Perpetual Motion",
+    "pasta": "suzuki9/",
+    "paginas": ["pagina-1.png", "pagina-2.png", "pagina-3.png", "pagina-4.png", "pagina-5.png"],
+    "musicxml": "partitura.mxl",
+    "partitura": "partitura.json",
+    "calib": "calib.json",
+    "violino": "violino.png"
+   },   
    {
     "titulo": "Suzuki 10 Allegretto",
     "pasta": "suzuki10/",
@@ -7,14 +25,5 @@
     "partitura": "partitura.json",
     "calib": "calib.json",
     "violino": "violino.png"
-  },
-  {
-    "titulo": "Suzuki 9 Perpetual Motion",
-    "pasta": "suzuki9/",
-    "paginas": ["pagina-1.png", "pagina-2.png", "pagina-3.png", "pagina-4.png", "pagina-5.png"],
-    "musicxml": "partitura.mxl",
-    "partitura": "partitura.json",
-    "calib": "calib.json",
-    "violino": "violino.png"
   }
-]
+ ]
