@@ -1,5 +1,23 @@
 [
     {
+    "titulo": "Suzuki 1 Twinkle, Twinkle, Little Star",
+    "pasta": "suzuki1/",
+    "paginas": ["pagina-1.png", "pagina-2.png", "pagina-3.png"],
+    "musicxml": "partitura.mxl",
+    "partitura": "partitura.json",
+    "calib": "calib.json",
+    "violino": "violino.png"
+    }, 
+    {
+    "titulo": "Suzuki 6 May Song",
+    "pasta": "suzuki6/",
+    "paginas": ["pagina-1.png", "pagina-2.png", "pagina-3.png"],
+    "musicxml": "partitura.mxl",
+    "partitura": "partitura.json",
+    "calib": "calib.json",
+    "violino": "violino.png"
+    },   
+    {
     "titulo": "Suzuki 8 Allegro",
     "pasta": "suzuki8/",
     "paginas": ["pagina-1.png", "pagina-2.png", "pagina-3.png", "pagina-4.png"],
