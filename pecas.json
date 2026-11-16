@@ -36,7 +36,7 @@
     "violino": "violino.png"
     }, 
     {
-    "titulo": "Suzuki 5 O Come, Little Children",
+    "titulo": "Suzuki 5 O Come, Little C.",
     "pasta": "suzuki5/",
     "paginas": ["pagina-1.png", "pagina-2.png", "pagina-3.png", "pagina-4.png"],
     "musicxml": "partitura.mxl",
