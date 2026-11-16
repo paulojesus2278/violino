@@ -9,6 +9,42 @@
     "violino": "violino.png"
     }, 
     {
+    "titulo": "Suzuki 2 Lightly Row",
+    "pasta": "suzuki2/",
+    "paginas": ["pagina-1.png", "pagina-2.png", "pagina-3.png", "pagina-4.png"],
+    "musicxml": "partitura.mxl",
+    "partitura": "partitura.json",
+    "calib": "calib.json",
+    "violino": "violino.png"
+    }, 
+    {
+    "titulo": "Suzuki 3 Song of the Wind",
+    "pasta": "suzuki3/",
+    "paginas": ["pagina-1.png", "pagina-2.png", "pagina-3.png"],
+    "musicxml": "partitura.mxl",
+    "partitura": "partitura.json",
+    "calib": "calib.json",
+    "violino": "violino.png"
+    },
+    {
+    "titulo": "Suzuki 4 Go Tell Aunt Rhody",
+    "pasta": "suzuki4/",
+    "paginas": ["pagina-1.png", "pagina-2.png", "pagina-3.png"],
+    "musicxml": "partitura.mxl",
+    "partitura": "partitura.json",
+    "calib": "calib.json",
+    "violino": "violino.png"
+    }, 
+    {
+    "titulo": "Suzuki 5 O Come, Little Children",
+    "pasta": "suzuki5/",
+    "paginas": ["pagina-1.png", "pagina-2.png", "pagina-3.png", "pagina-4.png"],
+    "musicxml": "partitura.mxl",
+    "partitura": "partitura.json",
+    "calib": "calib.json",
+    "violino": "violino.png"
+    }, 
+    {
     "titulo": "Suzuki 6 May Song",
     "pasta": "suzuki6/",
     "paginas": ["pagina-1.png", "pagina-2.png", "pagina-3.png"],
